@@ -1,0 +1,16 @@
+{
+  "name": "emailhangman",
+  "version": "1.0.0",
+  "description": "Cheater tool for hangman email chain",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alex Kurata",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.3",
+    "file-system": "^2.2.2",
+    "path": "^0.12.7"
+  }
+}
