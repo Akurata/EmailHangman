@@ -4,6 +4,7 @@ const app = express();
 
 var fs = require('fs');
 var path = require('path');
+var _ = require('underscore');
 var wordnet = require('wordnet');
 var ProgressBar = require('cli-progress');
 
@@ -15,9 +16,11 @@ var puzzle;
 var wrong;
 var right;
 var words = {};
+var regWords = [];
 var wordCount = 0;
 var matches = [];
 var falseMatches = [];
+var results = {};
 
 function parseWords(s) {
   var array = s.split('');
@@ -64,6 +67,7 @@ function parseWords(s) {
     for(var j = 0; j < temp.length; j++) { //Filter unwanted specific characters
       if((temp[j] === '_') && (temp[j+1] === '_')) { //Remove double underscores
         remove.push(j+1);
+        temp[j] = '*'
       }
       if(temp[j] === ' ') { //Remove excess spaces
         remove.push(j);
@@ -89,39 +93,41 @@ function parseWords(s) {
     match = [];
 
     console.log("Word " + i + ": " + words[i].join(' '));
+    regWords.push(words[i].join(''));
   }
   console.log("Guessed Wrong: " + wrong);
   console.log("Guessed Right: " + right);
 
+  console.log("REG WORDS:")
+  console.log(regWords)
 
 
+var tempFalse = [];
+var tempMatch = [];
   //Generate match data
   for(var i = 1; i <= wordCount; i++) {
     for(var j = 0; j < words[i].length; j++) {
       if(right.indexOf(words[i][j]) != -1) {
           matches.push({size: words[i].length, index: j, letter: words[i][j]});
+
+          if(_.findWhere(tempMatch, {size: words[i].length, index: j}) == null) {
+            tempMatch.push({size: words[i].length, index: j});
+          }
       }else {
-          falseMatches.push({size: words[i].length, index: j});
-      }
-    }
-  }
-var temp = [];
+        if(_.findWhere(tempFalse, {size: words[i].length, index: j}) == null) {
+          tempFalse.push({size: words[i].length, index: j});
+        }
 
-
-  for(var i = 0; i < falseMatches.length; i++) {
-    for(var j = 0; j < matches.length; j++) {
-      if((falseMatches[i].size == matches[j].size) && (falseMatches[i].index == matches[j].index)) {
-        falseMatches.splice(i, 1)
       }
     }
   }
 
+  for(var i = 0; i < tempFalse.length; i++) {
+    if(_.findWhere(tempMatch, tempFalse[i]) == null) {
+      falseMatches.push(tempFalse[i]);
+    }
+  }
 
-
-//console.log(falseMatches.map(function(x) {return x.size; }).indexOf(4))
-
-  console.log(falseMatches.indexOf(obj))
-  console.log(matches[1].index == falseMatches[0].index)
   console.log("MATCHES: ")
   console.log(matches)
   console.log()
@@ -143,10 +149,9 @@ fs.readFile('email.json', (err, data) => {
 
 
 
-
-
-
-
+function matchRule(str, rule) {
+  return new RegExp("^" + rule.split("*").join(".") + "$").test(str);
+}
 
 
 
@@ -170,80 +175,51 @@ var givenTrue = [];
 var givenFalse = [];
 
   bar.start(147305, 0);
-  list.forEach((item, index) => {
 
-    if(sizePool.includes((item).length)) { //If item is correct size
+//Generate matchable regex strings?
 
-        if((item).indexOf(" ") == -1) { //If item has no space char
+list.forEach((item, index) => {
+  //Generate rule based off of string length compared to known characters
+  if(sizePool.includes(item.length)) { //If item is a correct size
+    if(item.indexOf(" ") === -1) { //If item has no space char
+      if(item.search(/[0-9]/g) == -1) { //Filter out numbers
+        regWords.forEach((word) => {
+          if(word.length === item.length) {
+            if(matchRule(item.toUpperCase(), word)) {
 
-          wrong.forEach((wrongChar) => {
+              var noBadLetter = true;
+              for(var i = 0; i < item.length; i++) { //Filter out guessed + bad letters
+                if(wrong.indexOf(item.toUpperCase().charAt(i)) !== -1) {
+                  noBadLetter = false;
+                  break;
+                }
 
-
-
-            if(item.toUpperCase().indexOf(wrongChar) == -1) { //No wrong char found
-
-              for(var i = 0; i < matches.length; i++) {
-                if(item.length === matches[i].size) { //Match size with one of matches
-                  //console.log("Comparing " + item + " to " + matches[i].letter + " at " + matches[i].index + ": " + (item.toUpperCase().charAt(matches[i].index) === matches[i].letter))
-                  if(item.toUpperCase().charAt(matches[i].index) === matches[i].letter) { //Check item matches word missing char
-                    if(givenTrue.indexOf(index) === -1) { //Sort based off rules. Next find crossfactor of rules
-                      givenTrue.push(index);
-                    }
-                  }else if(givenFalse.indexOf(index) === -1) {
-                      givenFalse.push(index);
-                    }
+                if(right.indexOf(item.toUpperCase().charAt(i)) !== -1) {
+                  if(word.charAt(i) != item.toUpperCase().charAt(i)) {
+                    noBadLetter = false;
+                    break;
                   }
+
+                }
+              }
+
+              if(noBadLetter) {
+                if(bestGuess.indexOf(index) === -1) { //Unique check;
+                  bestGuess.push(index);
                 }
               }
 
 
-          });
-        }
+
+            }
+          }
+        })
+}
     }
-    //Empty space can't be an already guessed letter
-
-      //Determine if there are correct characters for a specific word length
-        //IF NO: Push word
-        //IF YES: Determine index of characters in word list word
-          //Match index vs item word
-          //IF MATCH: Push word
-
-
-      //Empty space vs known characters
-      //_ = unknown
-
-    bar.update(index);
-    if(index == 147305) {
-      bar.stop();
-    }
-  });
-  givenTrue.forEach((testItem) => { //Union the two sets
-    if(givenFalse.indexOf(testItem) === -1) {
-      if(bestGuess.indexOf(testItem) === -1) {
-        bestGuess.push(testItem);
-      }
-    }
-  });
-
-
-//Filter Known Pool
-  var knownPool = [];
-
-
-
-
-  if(found === []) {
-    console.log("\nWord Not Found...");
-  }else {
-    /*
-    console.log("\nFound: " + found.length)
-    for(var i = 0; i < found.length; i++) {
-    }
-    */
-    console.log("Best Guess Found: " + bestGuess.length);
-    for(var i = 0; i < bestGuess.length; i++) {
-      //console.log(list[bestGuess[i]].toUpperCase())
-    }
+  }
+  bar.update(index);
+  if(index == 147305) {
+    bar.stop();
   }
 });
 
@@ -251,8 +227,29 @@ var givenFalse = [];
 
 
 
+
+  if(found === []) {
+    console.log("\nWord Not Found...");
+  }else {
+    for(var i = 0; i < bestGuess.length; i++) {
+      results[i] = {length: list[bestGuess[i]].length, word: list[bestGuess[i]]}
+    }
+    console.log("Matches Found: " + bestGuess.length);
+    console.log(_.sortBy(results, 'length'))
+
+
+  }
+//  console.log("Does OF exist: " + list[list.indexOf("of")] + " " + list.indexOf("of"))
+});
+
+
+
 app.get('/', (req, res) => {
-  res.json(words);
+  res.sendFile(path.resolve('./index.html'));
+});
+
+app.get('/data', (req, res) => {
+  res.send(results);
 });
 
 app.listen(3000, 'localhost', (err) => {

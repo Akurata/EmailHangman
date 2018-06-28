@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>
+
+    function outline() {
+      for(var i = 1; i < 11; i++) {
+        var node = document.createElement("td");
+        node.innerHTML = i;
+        document.getElementById("header").appendChild(node)
+      }
+
+      var data = {};
+      fetch('/data', (req, res) => {
+        data = res
+      });
+
+
+    }
+
+    </script>
+  </head>
+  <body onLoad="outline()">
+    <table>
+      <tbody id="body">
+        <tr id="header">
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
