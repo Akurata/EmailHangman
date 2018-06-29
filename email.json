@@ -1,8 +1,6 @@
 
 {
   "header": "_________ | | | O | | | ____|_____",
-  "guessedWrong": ["P"],
-  "guessedRight": ["I","M","A","O","E","T","F"],
-  "old": "__ __    __ __ __ __,    I ' M    __ I __ __ A    __ __ __ __    __ __ __    __ A __ __ __ __ __    __ __ __    __ __    A __ __    __ I M __.",
-  "fullPuzzle": "__ O    __ O __ E,    I ' M    F I __ __ A     __ __ __ T    T __ E    F A T T E __ T    __ __ T    O F    A __ __    T I M E."
+  "guessedWrong": ["H", "C", "K"],
+  "fullPuzzle": "__ O O __ S    A N D    F A R T S    A N D    N __ T S    A N D    B A __ __ S    A N D    B I G    __ O O __ I E S    I N    __ Y    B __ T T    A N D    I N    __ Y    __ A N T S."
 }

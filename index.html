@@ -3,29 +3,181 @@
   <head>
     <script>
 
-    function outline() {
-      for(var i = 1; i < 11; i++) {
-        var node = document.createElement("td");
-        node.innerHTML = i;
-        document.getElementById("header").appendChild(node)
-      }
+    var filterData = [];
 
-      var data = {};
-      fetch('/data', (req, res) => {
-        data = res
+    function fillData() {
+      fetch('/data', {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'GET'
+      }).then((res) => {
+        res.json().then((data) => {
+          filterData = data;
+          for(var i = 0; i < data.length; i++) {
+            var item = document.createElement("td");
+            var list = document.createElement("ul");
+            for(var j = 0; j < data[i].length; j++) {
+              var node = document.createElement("li");
+              node.classList.add("words")
+              var temp = data[i][j].charAt(0).toUpperCase() + data[i][j].substr(1);
+              node.innerHTML = temp;
+              list.appendChild(node);
+            }
+            item.appendChild(list);
+            document.getElementById("items").appendChild(item)
+          }
+
+        });
+
+      })
+    }
+
+    function fillGuess() {
+      fetch('/guess', {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'GET'
+      }).then((res) => {
+        res.json().then((data) => {
+          var wrong = document.createElement("li");
+          wrong.innerHTML = "Wrong Guesses: " + data['wrong'].join(', ');
+          document.getElementById("puzzle").appendChild(wrong);
+
+          var right = document.createElement("li");
+          right.innerHTML = "Right Guesses: " + data['right'].join(', ');
+          document.getElementById("puzzle").appendChild(right);
+        })
+      });
+    }
+
+    function fillPuzzle() {
+      fetch('/puzzle', {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'GET'
+      }).then((res) => {
+        res.json().then((data) => {
+          var size;
+          for(var i = 1; i < 100; i++) {
+            if(data[i] == undefined) {
+              size = i;
+              break;
+            }
+          }
+          for(var i = 1; i < size; i++) {
+            var node = document.createElement("th");
+            node.id = i - 1;
+
+            node.innerHTML = data[i].join('').replace(/\*/g, ' _ ');
+            document.getElementById("headers").appendChild(node);
+          }
+        });
       });
 
+      fillGuess();
+    }
+
+
+
+    function filterPush() {
 
     }
 
+
+
+
     </script>
+    <style>
+
+    h3 {
+      margin: 0;
+    }
+
+    #container {
+      width: 85%;
+      margin: auto;
+      margin-top: 50px;
+      font-size: 20px;
+      font-family: "Trebuchet MS", "Lucida Grande", "Lucida Sans Unicode";
+    }
+
+    #suggestion {
+      padding-top: 100px;
+    }
+
+    input[type='text'] {
+      font-size: 20px;
+      font-family: "Trebuchet MS", "Lucida Grande", "Lucida Sans Unicode";
+    }
+
+    #userGuess {
+      margin: auto;
+    }
+
+    td {
+      text-align: center;
+      vertical-align: top;
+      border-right: 2px solid #c4c4c4;
+      border-left: 2px solid #c4c4c4;
+      padding: 0 20px;
+    }
+
+    th {
+      font-size: 20px;
+    }
+
+    table {
+      padding-top: 50px;
+      margin:auto;
+    }
+
+    ul {
+      list-style: none;
+      float: left;
+      padding: 0;
+    }
+
+    .words:hover {
+      color: #0ebbf4;
+      cursor: pointer;
+    }
+
+    #puzzleContainer {
+      float: right;
+      margin-left: 75px;
+    }
+    #guessContainer {
+      margin: 10px;
+    }
+
+    </style>
   </head>
-  <body onLoad="outline()">
-    <table>
-      <tbody id="body">
-        <tr id="header">
-        </tr>
-      </tbody>
-    </table>
+  <body onLoad="fillPuzzle(); fillData();">
+    <div id="container">
+      <div id="puzzleContainer">
+        <ul id="puzzle">
+
+        </ul>
+      </div>
+      <div id="suggestion">
+        Suggestion:
+      </div>
+      <hr/>
+
+      <table>
+        <tbody id="body">
+          <tr id="headers">
+          </tr>
+          <tr id="items">
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </body>
 </html>
