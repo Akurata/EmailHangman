@@ -26,6 +26,10 @@ var matches = [];
 var falseMatches = [];
 var results = {};
 
+var vowels = ["A", "E", "I", "O", "U"];
+var unUsedVowels = [];
+
+
 //// TEMP ////
 var guessMatch = [];
 
@@ -60,13 +64,13 @@ function parseWords(s) {
         i++;
       }
     }else {
-      i = i + 4;
+      i = i + 4; //Length of spaces
     }
   }
 
   //// TEMP ////
   for(var i = 1; i <= wordCount; i++) { //Populate empty match array
-    guessMatch.push([]);
+    guessMatch.push([]); // 7-9-2018: I forgot how/why this works
   }
 
 
@@ -76,42 +80,15 @@ function parseWords(s) {
   var removeCount;
   var match = [];
 
-  for(var i = 1; i <= wordCount; i++) {
-    temp = words[i].split('');
-    for(var j = 0; j < temp.length; j++) { //Filter unwanted specific characters
-      if((temp[j] === '_') && (temp[j+1] === '_')) { //Remove double underscores
-        remove.push(j+1);
-        temp[j] = '*'
-      }
-      if(temp[j] === ' ') { //Remove excess spaces
-        remove.push(j);
-      }
-      if(temp[j] === '.') { //Remove period
-        remove.push(j);
-      }
-      if(temp[j] === '\'') { //Remove apostrophe
-        remove.push(j);
-      }
-      if(temp[j] === ',') { //Remove comma
-        remove.push(j);
-      }
-      if(temp[j] === '-') { //Remove hyphen
-        remove.push(j);
-      }
-    }
-    for(var k = 0; k < temp.length; k++) {
-      if(remove.includes(k)) {
-        remove.shift();
-      }else {
-        match.push(temp[k]);
-      }
-    }
-    words[i] = match;
-    match = [];
+  var reg;
 
-  //  console.log("Word " + i + ": " + words[i].join(' '));
-    regWords.push(words[i].join(''));
+  for(var i = 1; i <= wordCount; i++) {
+    //Regex character filtering
+    words[i] = words[i].replace(/__/g, '*');
+    words[i] = words[i].replace(/[\s.,\'-]/g, '');
+    regWords.push(words[i]);
   }
+  console.log(regWords)
 //  console.log("Guessed Wrong: " + wrong);
 //  console.log("Guessed Right: " + right);
 
@@ -146,129 +123,127 @@ var tempMatch = [];
   }
 }
 
-
-fs.readFile('email.json', (err, data) => {
-  if(err) throw err;
-  puzzle = JSON.parse(data);
-  wrong = puzzle.guessedWrong;
-
-  //Generate right based off puzzle
-  right = [];
-  puzzle.fullPuzzle.split('').forEach((char) => {
-    if(char.match(/[a-z]/i)) {
-      if(right.indexOf(char) == -1) {
-        right.push(char);
-      }
-    }
-  });
-  right.sort();
-
-  parseWords(puzzle.fullPuzzle);
-});
-
-
-
-
 function matchRule(str, rule) {
   return new RegExp("^" + rule.split("*").join(".") + "$").test(str);
 }
 
+function read() {
+  fs.readFile('email.json', (err, data) => {
+    if(err) throw err;
+    puzzle = JSON.parse(data);
+    wrong = puzzle.guessedWrong;
 
-var wordList = [];
-
-lineReader.on('line', (line) => {
-  wordList.push(line);
-  listCount++;
-}).on('close', () => {
-
-
-
-  var found = [];
-  var bestGuess = [];
-  var givenTrue = [];
-  var givenFalse = [];
-
-  //Filter Size Pool
-  var sizePool = [];
-  for(var i = 1; i <= wordCount; i++) {
-    if(sizePool.indexOf((words[i]).length) === -1) {
-      sizePool.push((words[i]).length);
+    for(var i = 0; i < wrong.length; i++) {
+      if(_.indexOf(vowels, wrong[i]) !== -1) {
+        vowels.splice(_.indexOf(vowels, char), 1);
+      }
     }
-  }
+
+    //Generate right based off puzzle
+    right = [];
+    puzzle.fullPuzzle.split('').forEach((char) => {
+      if(char.match(/[a-z]/i)) {
+        if(right.indexOf(char) == -1) {
+          right.push(char);
+        }
+
+        if(_.indexOf(vowels, char) !== -1) {
+          vowels.splice(_.indexOf(vowels, char), 1);
+        }
+
+      }
+    });
+    right.sort();
+    parseWords(puzzle.fullPuzzle);
+  });
 
 
 
+  var wordList = [];
 
-  bar.start(listCount, 0);
+  lineReader.on('line', (line) => {
+    if(line.search(/[-.&\/]/g) === -1) { //Filter out weird words from list
+      wordList.push(line);
+      listCount++;
+    }
 
+  }).on('close', () => {
 
+    var found = [];
+    var bestGuess = [];
+    var givenTrue = [];
+    var givenFalse = [];
 
-  wordList.forEach((item, index) => {
-    //Generate rule based off of string length compared to known characters
-    if(sizePool.includes(item.length)) { //If item is a correct size
-      if(item.indexOf(" ") === -1) { //If item has no space char
-        if(item.search(/[0-9]/g) == -1) { //Filter out numbers
-          regWords.forEach((word, wordIndex) => {
-            if(word.length === item.length) {
-              if(matchRule(item.toUpperCase(), word)) {
-                var noBadLetter = true;
-                for(var i = 0; i < item.length; i++) { //Filter out guessed + bad letters
-                  if(wrong.indexOf(item.toUpperCase().charAt(i)) !== -1) {
-                    noBadLetter = false;
-                    break;
-                  }
+    //Filter Size Pool
+    var sizePool = [];
+    for(var i = 1; i <= wordCount; i++) {
+      if(sizePool.indexOf((words[i]).length) === -1) {
+        sizePool.push((words[i]).length);
+      }
+    }
 
-                  if(right.indexOf(item.toUpperCase().charAt(i)) !== -1) {
-                    if(word.charAt(i) != item.toUpperCase().charAt(i)) {
-                      noBadLetter = false;
+    bar.start(listCount, 0);
+
+    wordList.forEach((item, index) => {
+      //Generate rule based off of string length compared to known characters
+      if(sizePool.includes(item.length)) { //If item is a correct size
+        if(item.indexOf(" ") === -1) { //If item has no space char
+          if(item.search(/[0-9]/g) == -1) { //Filter out numbers
+            regWords.forEach((word, wordIndex) => {
+              if(word.length === item.length) {
+                if(matchRule(item.toUpperCase(), word)) {
+                  var wordGood = true;
+                  for(var i = 0; i < item.length; i++) { //Filter out guessed + bad letters
+                    if(wrong.indexOf(item.toUpperCase().charAt(i)) !== -1) {
+                      wordGood = false;
                       break;
                     }
-
+                    if(right.indexOf(item.toUpperCase().charAt(i)) !== -1) {
+                      if(word.charAt(i) != item.toUpperCase().charAt(i)) {
+                        wordGood = false;
+                        break;
+                      }
+                    }
                   }
+
+                  if(item.search(/[aeiou]/ig) === -1) {
+                    wordGood = false;
+                  }
+
+                  if(wordGood) {
+                    if(guessMatch[wordIndex].indexOf(item) == -1) {
+                      guessMatch[wordIndex].push(item);
+                    }
+                  }
+
                 }
-
-                if(noBadLetter) {
-
-                  if(guessMatch[wordIndex].indexOf(item) == -1) {
-                    guessMatch[wordIndex].push(item);
-                  }
-
-
-                  //Working
-                  /*
-                  if(bestGuess.indexOf(index) === -1) { //Unique check;
-                    bestGuess.push(index);
-                  }
-                  */
-                }
-
               }
-            }
-          })
+            })
 
 
+          }
         }
       }
-    }
 
-    bar.update(index);
-    if(index == listCount - 1) {
-      bar.stop();
+      bar.update(index);
+      if(index == listCount - 1) {
+        bar.stop();
 
-      for(var i = 0; i < bestGuess.length; i++) {
-        //results[i] = {length: wordList[bestGuess[i]].length, word: wordList[bestGuess[i]]}
+        for(var i = 0; i < bestGuess.length; i++) {
+          //results[i] = {length: wordList[bestGuess[i]].length, word: wordList[bestGuess[i]]}
+        }
+
+        console.log()
+        //console.log("Matches Found: " + bestGuess.length);
+
+        //console.log(guessMatch)
+
+        //console.log(_.sortBy(results, 'length'))
       }
-
-      console.log()
-      console.log("Matches Found: " + bestGuess.length);
-
-      console.log(guessMatch)
-
-      //console.log(_.sortBy(results, 'length'))
-    }
+    });
   });
-});
-
+}
+read();
 
 
 
@@ -292,7 +267,7 @@ app.get('/guess', (req, res) => {
 });
 
 app.post('/filter', (req, res) => {
-
+  read();
 });
 
 
