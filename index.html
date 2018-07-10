@@ -79,14 +79,53 @@
           }
         });
       });
-
       fillGuess();
     }
 
 
+    function populateWordData() {
 
-    function filterPush() {
+      fetch('/wordData', {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'GET'
+      }).then((res) => {
+        res.json().then((data) => {
 
+          Object.keys(data).forEach(function(key) { //Make headers
+            var node = document.createElement("th")
+            node.id = "length" + key;
+            node.innerHTML = key
+            document.getElementById("wordLength").appendChild(node)
+
+            var row = document.createElement("td");
+            var list = document.createElement("ul");
+
+            data[key].forEach((letter) => {
+              var item = document.createElement("li");
+              item.innerHTML = letter["letter"];
+              item.classList.add("letters")
+              list.appendChild(item)
+            });
+
+            row.appendChild(list);
+            document.getElementById("letter").appendChild(row);
+
+
+          });
+
+
+
+        });
+      });
+    }
+
+
+    function toggleData() {
+      console.log(document.getElementById("wordData").style.visibility)
+      document.getElementById("wordData").style.visibility == 'hidden' ? document.getElementById("wordData").style.visibility = 'visible' : document.getElementById("wordData").style.visibility = 'hidden';
     }
 
 
@@ -144,7 +183,8 @@
     }
 
     .words:hover {
-      color: #1a8cff;
+      color: #BD4932;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.2);
       cursor: pointer;
     }
 
@@ -156,17 +196,54 @@
       margin: 10px;
     }
 
+    #infoButton {
+      float: right;
+      font-size: 16px;
+      font-family: "Trebuchet MS", "Lucida Grande", "Lucida Sans Unicode";
+      font-weight: bold;
+
+      border: 2px solid #008CBA;
+      background: none;
+    }
+
+    #infoButton:hover {
+      background-color: #91d4ea;
+      cursor: pointer;
+    }
+
+    #wordData {
+      z-index: 3;
+
+      display:table;
+
+      font-weight: bold;
+
+      background: #FFD34E;
+      color: #BD4932;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+      border: 1px solid black;
+    }
+    #wordData td {
+      border: 2px dashed white;
+      border-top: 2px double white;
+      border-bottom: 2px double white
+    }
+
     </style>
   </head>
-  <body onLoad="fillPuzzle(); fillData();">
+  <body onLoad="fillPuzzle(); fillData(); populateWordData();">
     <div id="container">
+
+
+
+
       <div id="puzzleContainer">
         <ul id="puzzle">
-
         </ul>
       </div>
       <div id="suggestion">
         Suggestion:
+        <input id="infoButton" type="button" onClick="toggleData()" value="Info" />
       </div>
 
       <hr/>
@@ -179,6 +256,14 @@
           </tr>
         </tbody>
       </table>
+      <div id="wordData" style="visibility: hidden;">
+        <table>
+          <tbody>
+            <tr id="wordLength"></tr>
+            <tr id="letter"></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </body>
 </html>

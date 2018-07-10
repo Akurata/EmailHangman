@@ -8,6 +8,9 @@ var _ = require('underscore');
 var wordnet = require('wordnet');
 var ProgressBar = require('cli-progress');
 
+var probability = require('./probability.js');
+
+
 const bar = new ProgressBar.Bar({}, ProgressBar.Presets.shades_classic);
 
 var lineReader = require('readline').createInterface({
@@ -32,6 +35,8 @@ var unUsedVowels = [];
 
 //// TEMP ////
 var guessMatch = [];
+
+
 
 
 function parseWords(s) {
@@ -206,13 +211,14 @@ function read() {
                     }
                   }
 
-                  if(item.search(/[aeiou]/ig) === -1) {
+                  if(item.search(/[aeiou]/ig) === -1) { //If word has vowel
                     wordGood = false;
                   }
 
                   if(wordGood) {
                     if(guessMatch[wordIndex].indexOf(item) == -1) {
                       guessMatch[wordIndex].push(item);
+                      probability.populateData(item)
                     }
                   }
 
@@ -229,10 +235,6 @@ function read() {
       if(index == listCount - 1) {
         bar.stop();
 
-        for(var i = 0; i < bestGuess.length; i++) {
-          //results[i] = {length: wordList[bestGuess[i]].length, word: wordList[bestGuess[i]]}
-        }
-
         console.log()
         //console.log("Matches Found: " + bestGuess.length);
 
@@ -241,9 +243,13 @@ function read() {
         //console.log(_.sortBy(results, 'length'))
       }
     });
+    probability.formatData();
   });
 }
 read();
+
+
+
 
 
 
@@ -270,6 +276,9 @@ app.post('/filter', (req, res) => {
   read();
 });
 
+app.get('/wordData', (req, res) => {
+  res.json(probability.getData());
+});
 
 
 
