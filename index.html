@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html>
   <head>
     <script>
@@ -93,6 +93,7 @@
         method: 'GET'
       }).then((res) => {
         res.json().then((data) => {
+          var total = {};
 
           Object.keys(data).forEach(function(key) { //Make headers
             var node = document.createElement("th")
@@ -100,26 +101,53 @@
             node.innerHTML = key
             document.getElementById("wordLength").appendChild(node)
 
-            var row = document.createElement("td");
+            var column = document.createElement("td");
             var list = document.createElement("ul");
+
 
             data[key].forEach((letter) => {
               var item = document.createElement("li");
-              item.innerHTML = letter["letter"];
-              item.classList.add("letters")
-              list.appendChild(item)
+              item.innerHTML = letter["letter"] + " (" + letter["count"] + ")";
+              item.classList.add("letters");
+              list.appendChild(item);
             });
 
-            row.appendChild(list);
-            document.getElementById("letter").appendChild(row);
-
+            column.appendChild(list);
+            document.getElementById("letter").appendChild(column);
 
           });
-
-
-
+          appendTotal();
         });
       });
+    }
+
+    function appendTotal() {
+      fetch('/total', {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'GET'
+      }).then((res) => {
+        res.json().then((data) => {
+          var totalHeader = document.createElement("th");
+          totalHeader.innerHTML = "Total";
+          document.getElementById("wordLength").appendChild(totalHeader);
+          var totalColumn = document.createElement("td")
+          var totalList = document.createElement("ul");
+
+          console.log(data)
+          data.forEach((letter) => {
+            var item = document.createElement("li");
+            item.innerHTML = letter["letter"] + " (" + letter["count"] + ")";
+            item.classList.add("letters");
+            totalList.appendChild(item);
+          })
+
+          totalColumn.appendChild(totalList);
+          document.getElementById("letter").appendChild(totalColumn);
+        })
+      })
     }
 
 
@@ -128,8 +156,11 @@
       document.getElementById("wordData").style.visibility == 'hidden' ? document.getElementById("wordData").style.visibility = 'visible' : document.getElementById("wordData").style.visibility = 'hidden';
     }
 
-
-
+    document.addEventListener('click', (event) => {
+      if(event.target.id !== "infoButton") {
+        document.getElementById("wordData").style.visibility = 'hidden';
+      }
+    });
 
     </script>
     <style>
@@ -143,6 +174,7 @@
       margin: auto;
       margin-top: 50px;
       font-size: 20px;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.2);
       font-family: "Trebuchet MS", "Lucida Grande", "Lucida Sans Unicode";
     }
 
@@ -212,12 +244,9 @@
     }
 
     #wordData {
-      z-index: 3;
-
-      display:table;
-
+      position: absolute;
       font-weight: bold;
-
+      display: table;
       background: #FFD34E;
       color: #BD4932;
       text-shadow: 0 1px 1px rgba(0,0,0,0.2);
@@ -228,12 +257,25 @@
       border-top: 2px double white;
       border-bottom: 2px double white
     }
+    #wordData table {
+      padding-top: 10px;
+    }
 
     </style>
   </head>
   <body onLoad="fillPuzzle(); fillData(); populateWordData();">
+
     <div id="container">
 
+        <div id="wordData" style="visibility: hidden;">
+          <table>
+            <h3 style="margin: 0px;margin-top:5px; text-align:center;">Letter Frequency</h3>
+            <tbody>
+              <tr id="wordLength"></tr>
+              <tr id="letter"></tr>
+            </tbody>
+          </table>
+        </div>
 
 
 
@@ -256,14 +298,7 @@
           </tr>
         </tbody>
       </table>
-      <div id="wordData" style="visibility: hidden;">
-        <table>
-          <tbody>
-            <tr id="wordLength"></tr>
-            <tr id="letter"></tr>
-          </tbody>
-        </table>
-      </div>
+
     </div>
   </body>
 </html>

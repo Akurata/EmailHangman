@@ -10,6 +10,7 @@ var ProgressBar = require('cli-progress');
 
 var probability = require('./probability.js');
 
+var puzzle = require('./puzzle.js');
 
 const bar = new ProgressBar.Bar({}, ProgressBar.Presets.shades_classic);
 
@@ -18,9 +19,10 @@ var lineReader = require('readline').createInterface({
 });
 
 
-var puzzle;
+var input;
 var wrong;
 var right;
+var answer;
 var words = {};
 var regWords = [];
 var listCount = 0;
@@ -135,8 +137,9 @@ function matchRule(str, rule) {
 function read() {
   fs.readFile('email.json', (err, data) => {
     if(err) throw err;
-    puzzle = JSON.parse(data);
-    wrong = puzzle.guessedWrong;
+    input = JSON.parse(data);
+    wrong = input.guessedWrong;
+    answer = input.answer;
 
     for(var i = 0; i < wrong.length; i++) {
       if(_.indexOf(vowels, wrong[i]) !== -1) {
@@ -146,7 +149,7 @@ function read() {
 
     //Generate right based off puzzle
     right = [];
-    puzzle.fullPuzzle.split('').forEach((char) => {
+    input.fullPuzzle.split('').forEach((char) => {
       if(char.match(/[a-z]/i)) {
         if(right.indexOf(char) == -1) {
           right.push(char);
@@ -159,7 +162,7 @@ function read() {
       }
     });
     right.sort();
-    parseWords(puzzle.fullPuzzle);
+    parseWords(input.fullPuzzle);
   });
 
 
@@ -218,7 +221,7 @@ function read() {
                   if(wordGood) {
                     if(guessMatch[wordIndex].indexOf(item) == -1) {
                       guessMatch[wordIndex].push(item);
-                      probability.populateData(item)
+                      probability.populateData(item, right)
                     }
                   }
 
@@ -244,6 +247,7 @@ function read() {
       }
     });
     probability.formatData();
+    puzzle.init(regWords, answer, right, wrong);
   });
 }
 read();
@@ -280,6 +284,9 @@ app.get('/wordData', (req, res) => {
   res.json(probability.getData());
 });
 
+app.get('/total', (req, res) => {
+  res.json(probability.getTotal());
+})
 
 
 

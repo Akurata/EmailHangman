@@ -1,6 +1,7 @@
 
 {
   "header": "_________ | | | O | | | ____|_____",
-  "guessedWrong": ["P"],
-  "fullPuzzle": "__ __    __ __ __ E,    I ' M    __ I __ __ A    __ __ __ __    __ __ E    __ A __ __ __ __ __    __ __ __    __ __    A __ __    __ I M E."
+  "guessedWrong": [],
+  "fullPuzzle": "__ __ __    __ __ __ __    __ __    __    __ __ __ __    __ __ __    __ __ __ __    __ __ __ __ ",
+  "answer": "The lake is a long way from here"
 }
